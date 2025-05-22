@@ -40,8 +40,8 @@ export const teamCoordinatorPlugin: Plugin = {
       await runtime.registerService(TeamUpdateTrackerService);
 
       // Register and start the CheckIn service
-      logger.info('Registering CheckInService...');
-      await runtime.registerService(CheckInService);
+      // logger.info('Registering CheckInService...');
+      // await runtime.registerService(CheckInService);
 
       // Register tasks
       logger.info('Registering team coordinator tasks...');
