@@ -184,7 +184,7 @@ export class CheckInService extends Service {
 
       const selections = interaction.selections;
       const userId = interaction.user?.id || interaction.member?.user?.id;
-      let userDetails: any;
+      let userDetails: User | null = null;
 
       // TODO : get discord service cool or in start
       const discordService = (await this.ensureDiscordClient(this.runtime)) as DiscordService;
@@ -292,6 +292,7 @@ export class CheckInService extends Service {
         name: 'Check-in Schedules',
         source: 'team-coordinator',
         type: ChannelType.GROUP,
+        worldId: this.runtime.agentId,
       });
 
       const timestamp = Date.now();
@@ -377,6 +378,7 @@ export class CheckInService extends Service {
         name: 'Report Channel Configurations',
         source: 'team-coordinator',
         type: ChannelType.GROUP,
+        worldId: this.runtime.agentId,
       });
 
       const memory = {
@@ -406,6 +408,16 @@ export class CheckInService extends Service {
   private async loadReportChannelConfigs(): Promise<void> {
     try {
       const roomId = createUniqueUuid(this.runtime, 'report-channel-config');
+      
+      // Ensure the room exists before trying to access it
+      await this.runtime.ensureRoomExists({
+        id: roomId as UUID,
+        name: 'Report Channel Configurations',
+        source: 'team-coordinator',
+        type: ChannelType.GROUP,
+        worldId: this.runtime.agentId,
+      });
+      
       const memories = await this.runtime.getMemories({
         roomId: roomId as UUID,
         tableName: 'messages',
