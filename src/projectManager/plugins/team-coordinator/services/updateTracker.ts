@@ -10,7 +10,7 @@ import {
   type MemoryMetadata,
 } from '@elizaos/core';
 import type { Channel, Client, GuildChannel, TextChannel, VoiceChannel } from 'discord.js';
-import { fetchCheckInSchedules } from '../actions/listCheckInSchedules';
+import { fetchCheckInSchedules } from '../actions/checkInList';
 import type { CheckInSchedule } from '../../../types';
 
 // Define interfaces for custom services

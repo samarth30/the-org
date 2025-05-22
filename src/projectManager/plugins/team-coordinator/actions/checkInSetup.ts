@@ -15,8 +15,8 @@ import {
   type UUID,
   type Service,
 } from '@elizaos/core';
-import { sendCheckInScheduleForm } from '../forms/checkInScheduleForm';
-import { sendCheckInReportForm } from '../forms/checkInReportForm';
+import { sendCheckInScheduleForm } from '../forms/scheduleForm';
+import { sendCheckInReportForm } from '../forms/checkInForm';
 
 interface DiscordComponentInteraction {
   customId: string;

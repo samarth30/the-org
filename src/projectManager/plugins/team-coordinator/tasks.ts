@@ -1,5 +1,5 @@
 import { type IAgentRuntime, type UUID, logger, type Service } from '@elizaos/core';
-import { TeamUpdateTrackerService } from './services/TeamUpdateTrackerService';
+import { TeamUpdateTrackerService } from './services/updateTracker';
 
 export const registerTasks = async (runtime: IAgentRuntime, initialWorldId?: UUID) => {
   // Ensure worldId is set to the agent's ID if not provided
@@ -27,7 +27,9 @@ export const registerTasks = async (runtime: IAgentRuntime, initialWorldId?: UUI
   });
 
   for (const task of tasks) {
-    await runtime.deleteTask(task.id);
+    if (task.id) {
+      await runtime.deleteTask(task.id);
+    }
   }
 
   // Register the check-in service task worker
