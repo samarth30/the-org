@@ -1,10 +1,25 @@
-import { type IAgentRuntime, type UUID, logger } from '@elizaos/core';
+import { type IAgentRuntime, type UUID, logger, type Service } from '@elizaos/core';
 import { TeamUpdateTrackerService } from './services/TeamUpdateTrackerService';
 
-export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
-  const teamUpdateService = new TeamUpdateTrackerService(runtime);
+export const registerTasks = async (runtime: IAgentRuntime, initialWorldId?: UUID) => {
+  // Ensure worldId is set to the agent's ID if not provided
+  const worldId = initialWorldId || runtime.agentId as UUID;
 
-  worldId = runtime.agentId;
+  // Try to get an existing service instance instead of creating a new one
+  let teamUpdateService: TeamUpdateTrackerService;
+  try {
+    const existingService = runtime.getService(TeamUpdateTrackerService.serviceType);
+    if (existingService) {
+      logger.info('Using existing TeamUpdateTrackerService');
+      teamUpdateService = existingService as TeamUpdateTrackerService;
+    } else {
+      logger.info('Creating new TeamUpdateTrackerService instance');
+      teamUpdateService = new TeamUpdateTrackerService(runtime);
+    }
+  } catch (error) {
+    logger.warn('Error getting existing service, creating new instance:', error);
+    teamUpdateService = new TeamUpdateTrackerService(runtime);
+  }
 
   // Clear existing tasks
   const tasks = await runtime.getTasks({
@@ -35,10 +50,10 @@ export const registerTasks = async (runtime: IAgentRuntime, worldId?: UUID) => {
   runtime.createTask({
     name: 'TEAM_CHECK_IN_SERVICE',
     description: 'Regular team check-in service job',
-    worldId,
+    worldId: worldId, // Explicitly pass worldId
     metadata: {
       updatedAt: Date.now(),
-      updateInterval: 1000 * 60, // 5 minutes
+      updateInterval: 1000 * 60, // 1 minute
     },
     tags: ['queue', 'repeat', 'team_coordinator'],
   });

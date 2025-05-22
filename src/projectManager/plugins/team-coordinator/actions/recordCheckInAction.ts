@@ -557,6 +557,7 @@ export const recordCheckInAction: Action = {
               name: 'Report Channel Configurations',
               source: 'team-coordinator',
               type: ChannelType.GROUP,
+              worldId: runtime.agentId,
             });
             logger.info(`Successfully created room with ID: ${roomId}`);
           } catch (roomError: unknown) {
@@ -621,6 +622,7 @@ export const recordCheckInAction: Action = {
             name: 'Check-in Schedules',
             source: 'team-coordinator',
             type: ChannelType.GROUP,
+            worldId: runtime.agentId,
           });
           logger.info(`Successfully ensured room exists with ID: ${roomId}`);
         } catch (roomError: unknown) {

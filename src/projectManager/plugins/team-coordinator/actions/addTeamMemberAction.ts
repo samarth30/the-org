@@ -364,6 +364,7 @@ export const addTeamMemberAction: Action = {
                 name: 'Storing Members config',
                 source: 'team-coordinator',
                 type: ChannelType.GROUP,
+                worldId : runtime.agentId
               });
               logger.info(`Successfully created room with ID: ${roomIdForStoringTeamMembers}`);
             } catch (error: unknown) {
