@@ -1,7 +1,7 @@
 {
   "name": "@elizaos/the-org",
   "description": "Project the-org for elizaOS",
-  "version": "1.0.0-beta.52",
+  "version": "1.0.0-beta.53",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
