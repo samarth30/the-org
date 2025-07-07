@@ -26,8 +26,13 @@ function hasRequiredEnvVars(agent: ProjectAgent | { character: Partial<Character
 
   if (usesDiscord) {
     // Get the actual values from agent settings
-    const discordId = agent.character.settings?.secrets?.DISCORD_APPLICATION_ID;
-    const discordToken = agent.character.settings?.secrets?.DISCORD_API_TOKEN;
+    const secrets = agent.character.settings?.secrets;
+    const discordId = (typeof secrets === 'object' && secrets !== null) 
+      ? secrets.DISCORD_APPLICATION_ID 
+      : undefined;
+    const discordToken = (typeof secrets === 'object' && secrets !== null)
+      ? secrets.DISCORD_API_TOKEN
+      : undefined;
 
     if (discordId && discordToken) {
       hasValidPlatform = true;
@@ -36,7 +41,10 @@ function hasRequiredEnvVars(agent: ProjectAgent | { character: Partial<Character
   }
 
   if (usesTelegram) {
-    const telegramToken = agent.character.settings?.secrets?.TELEGRAM_BOT_TOKEN;
+    const secrets = agent.character.settings?.secrets;
+    const telegramToken = (typeof secrets === 'object' && secrets !== null)
+      ? secrets.TELEGRAM_BOT_TOKEN
+      : undefined;
 
     if (telegramToken) {
       hasValidPlatform = true;
