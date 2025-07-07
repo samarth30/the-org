@@ -158,3 +158,6 @@ tmp/
 elizadb
 dist/
 .eliza
+*elizadb
+CLAUDE.md
+prd/*
