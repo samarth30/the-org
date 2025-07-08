@@ -13,6 +13,7 @@ import {
   type Service,
   type State,
   ModelType,
+  parseJSONObjectFromText,
 } from '@elizaos/core';
 import type { TeamMemberUpdate } from '../../../types';
 
@@ -290,23 +291,27 @@ async function parseTeamMemberUpdate(
     }
 
     // Use AI to parse the update text with a more flexible approach
-    const prompt = `Extract information from this team member update. The update will likely end with "sending my updates".
+    const prompt = `CRITICAL: You must respond with ONLY a valid JSON object. No explanations, no code blocks, no XML tags, no markdown - just pure JSON.
 
-    Parse the text and return a JSON object with these fields:
-    {
-      "serverName": "value", // Name of the server
-      "checkInType": "value", // Type of check-in (could be STANDUP, SPRINT, MENTAL_HEALTH, PROJECT_STATUS, RETRO, or something else)
-      "answers": { // Dynamic field with key-value pairs for all questions and answers found
-        "questionText1": "answerText1",
-        "questionText2": "answerText2"
-        // Any other key-value pairs detected in the format
-      }
-    }
+Extract information from this team member update and return ONLY this JSON structure:
 
-    For the "answers" field, extract any key-value pairs that look like questions and answers in the text.
-    Include ALL information from the update in the answers object.
+{
+  "serverName": "extract server name from text",
+  "checkInType": "extract check-in type (STANDUP, SPRINT, MENTAL_HEALTH, PROJECT_STATUS, RETRO)",
+  "answers": {
+    "questionText1": "answerText1",
+    "questionText2": "answerText2"
+  }
+}
 
-    Text to parse: "${text}"`;
+For the "answers" field, extract question-answer pairs. Look for patterns like:
+- Question on one line, answer on next line
+- "Question: Answer" format
+- Any key-value information
+
+Text to parse: "${text}"
+
+Respond with ONLY the JSON object:`;
 
     logger.info('Sending text to AI for parsing');
     logger.info('Prompt:', prompt);
@@ -320,14 +325,47 @@ async function parseTeamMemberUpdate(
 
     let parsedData;
     try {
-      // Remove any backticks or markdown formatting that might be in the response
-      const cleanedResponse = parsedResponse.replace(/```json\n?|\n?```/g, '').trim();
+      // Clean the response more aggressively
+      let cleanedResponse = parsedResponse.trim();
+      
+      // Remove XML-like tags (like <click>parseTeamUpdate ... </click>)
+      cleanedResponse = cleanedResponse.replace(/<[^>]*>/g, '');
+      
+      // Remove markdown code blocks
+      cleanedResponse = cleanedResponse.replace(/```json\n?|\n?```/g, '');
+      
+      // Remove any remaining XML or HTML-like content
+      cleanedResponse = cleanedResponse.replace(/parseTeamUpdate\s*/g, '');
+      
+      // Trim whitespace again
+      cleanedResponse = cleanedResponse.trim();
+      
+      // Try to find JSON object if it's embedded in other text
+      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanedResponse = jsonMatch[0];
+      }
+      
+      logger.info('Cleaned response for parsing:', cleanedResponse);
+      
       parsedData = JSON.parse(cleanedResponse);
       logger.info('Successfully parsed fields from AI response:', parsedData);
     } catch (error) {
       logger.error('Failed to parse AI response as JSON:', error);
       logger.error('Raw response that failed parsing:', parsedResponse);
-      throw new Error('PARSING_ERROR: AI response was not valid JSON');
+      
+      // Try parseJSONObjectFromText as fallback
+      try {
+        logger.info('Attempting fallback parsing with parseJSONObjectFromText');
+        parsedData = parseJSONObjectFromText(parsedResponse);
+        if (!parsedData) {
+          throw new Error('parseJSONObjectFromText returned null');
+        }
+        logger.info('Fallback parsing successful:', parsedData);
+      } catch (fallbackError) {
+        logger.error('Fallback parsing also failed:', fallbackError);
+        throw new Error('PARSING_ERROR: AI response was not valid JSON');
+      }
     }
 
     // Validate minimal required fields

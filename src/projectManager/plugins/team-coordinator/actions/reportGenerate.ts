@@ -98,16 +98,20 @@ export async function generateTeamReport(
       });
 
       // Create prompt for analysis
-      const prompt = `Analyze these team member updates and provide a detailed productivity report.
-      
-      The "answers" field contains all the update information in a question-answer format.
-      
-      Highlight the following in your analysis:
-      1. Overall Progress: What major tasks/milestones were completed?
-      2. Current Focus: What are they actively working on?
-      3. Productivity Analysis: Are they meeting deadlines? Any patterns in their work?
-      4. Blockers Impact: How are blockers affecting their progress?
-      5. Recommendations: What could improve their productivity?
+      const prompt = `CRITICAL: You must respond with ONLY plain text narrative. NO structured formats, NO code blocks, NO JSON, NO tool_code, NO markdown code fences.
+
+      Analyze these team member updates and write a simple paragraph summary. Write like a human manager would write.
+
+      Focus on:
+      - What they accomplished this week
+      - What they're working on next week
+      - Any blockers they mentioned
+      - Overall assessment
+
+      Example good response:
+      "Based on recent updates, the team member has made solid progress on the Jimmy project integrations this week, completing the initial setup and drafting the integration plan. Their main focus for next week will be continuing work on the Jimmy project integrations. They currently need clarification on API specifications which may impact their timeline."
+
+      RESPOND WITH PLAIN TEXT ONLY. NO CODE BLOCKS OR STRUCTURED FORMATS.
 
       Updates data: ${JSON.stringify(processedUpdates, null, 2)}`;
 
@@ -119,43 +123,61 @@ export async function generateTeamReport(
           stopSequences: [],
         });
 
-        report += `📋 **Productivity Analysis**:\n${analysis}\n\n`;
+        // Clean the analysis to remove any structured formats
+        let cleanAnalysis = analysis.trim();
+        
+        // Remove any code blocks or structured formats
+        cleanAnalysis = cleanAnalysis.replace(/```[\s\S]*?```/g, '');
+        cleanAnalysis = cleanAnalysis.replace(/`[^`]*`/g, '');
+        cleanAnalysis = cleanAnalysis.replace(/^\s*\{[\s\S]*\}\s*$/g, '');
+        cleanAnalysis = cleanAnalysis.replace(/tool_code|tool_name|tool_input/g, '');
+        
+        // If the cleaned analysis is empty or too short, provide a fallback
+        if (cleanAnalysis.length < 50) {
+          cleanAnalysis = `Team member has provided updates but detailed analysis could not be generated at this time.`;
+        }
+
+        report += `📋 **Productivity Analysis**:\n${cleanAnalysis}\n\n`;
         report += `📅 **Recent Updates**:\n`;
 
         // Add last 3 updates for reference
         const recentUpdates = memberUpdates.slice(0, 3);
         for (const update of recentUpdates) {
-          report += `\n🕒 ${new Date(update.timestamp).toLocaleString()}\n`;
+          report += `\n🕒 **${new Date(update.timestamp).toLocaleString()}**\n`;
 
           try {
             const answers = update.answers ? JSON.parse(update.answers) : {};
 
-            // Display all answers from the update
+            // Display all answers from the update in a cleaner format
             for (const [question, answer] of Object.entries(answers)) {
-              report += `▫️ **${question}**: ${answer}\n`;
+              if (answer && answer !== 'undefined' && answer !== 'null') {
+                report += `• **${question}**: ${answer}\n`;
+              }
             }
           } catch (error) {
             logger.error('Error parsing answers JSON for display:', error);
-            report += `▫️ Error parsing update details\n`;
+            report += `• Error parsing update details\n`;
           }
         }
       } catch (error) {
         logger.error('Error generating analysis:', error);
-        report += '❌ Error generating analysis. Showing raw updates:\n\n';
+        report += '❌ Error generating analysis. Showing recent updates:\n\n';
 
-        for (const update of memberUpdates) {
-          report += `Update from ${new Date(update.timestamp).toLocaleString()}:\n`;
+        for (const update of memberUpdates.slice(0, 3)) {
+          report += `🕒 **${new Date(update.timestamp).toLocaleString()}**\n`;
 
           try {
             const answers = update.answers ? JSON.parse(update.answers) : {};
 
-            // Display all answers from the update
+            // Display all answers from the update in a cleaner format
             for (const [question, answer] of Object.entries(answers)) {
-              report += `▫️ **${question}**: ${answer}\n`;
+              if (answer && answer !== 'undefined' && answer !== 'null') {
+                report += `• **${question}**: ${answer}\n`;
+              }
             }
           } catch (error) {
             logger.error('Error parsing answers JSON for display:', error);
-            report += `▫️ Error parsing update details\n`;
+            report += `• Error parsing update details\n`;
           }
         }
       }
@@ -173,13 +195,31 @@ export async function generateTeamReport(
 
 export const generateReport: Action = {
   name: 'GENERATE_REPORT',
-  description: 'Generates a comprehensive report of team member updates and productivity analysis',
+  description: 'Generates comprehensive reports of team member updates and productivity analysis for daily standups, sprint check-ins, project status, mental health check-ins, and team retrospectives. Use when user asks for reports, progress updates, team analysis, or wants to see how the team is doing.',
   similes: [
     'CREATE_REPORT',
     'TEAM_REPORT',
     'GET_TEAM_REPORT',
     'SHOW_TEAM_REPORT',
     'PRODUCE_TEAM_ANALYSIS',
+    'GENERATE_TEAM_REPORT',
+    'CREATE_TEAM_ANALYSIS',
+    'SHOW_PROGRESS',
+    'GET_PROGRESS',
+    'TEAM_PROGRESS',
+    'DAILY_REPORT',
+    'STANDUP_REPORT',
+    'SPRINT_REPORT',
+    'PROJECT_REPORT',
+    'MENTAL_HEALTH_REPORT',
+    'RETRO_REPORT',
+    'RETROSPECTIVE_REPORT',
+    'PRODUCTIVITY_REPORT',
+    'STATUS_REPORT',
+    'PROGRESS_REPORT',
+    'TEAM_STATUS',
+    'TEAM_UPDATES',
+    'UPDATE_REPORT',
   ],
   validate: async (runtime: IAgentRuntime, message: Memory) => {
     logger.info('Validating generateReport action');
@@ -308,12 +348,51 @@ export const generateReport: Action = {
     [
       {
         name: '{{name1}}',
+        content: { text: 'generate me a report around daily standup' },
+      },
+      {
+        name: '{{botName}}',
+        content: {
+          text: "",
+          actions: ['GENERATE_REPORT'],
+        },
+      },
+    ],
+    [
+      {
+        name: '{{name1}}',
         content: { text: 'Generate a daily standup report' },
       },
       {
         name: '{{botName}}',
         content: {
-          text: "I'll generate a daily standup report for you",
+          text: "",
+          actions: ['GENERATE_REPORT'],
+        },
+      },
+    ],
+    [
+      {
+        name: '{{name1}}',
+        content: { text: 'show me team progress' },
+      },
+      {
+        name: '{{botName}}',
+        content: {
+          text: "",
+          actions: ['GENERATE_REPORT'],
+        },
+      },
+    ],
+    [
+      {
+        name: '{{name1}}',
+        content: { text: 'team report' },
+      },
+      {
+        name: '{{botName}}',
+        content: {
+          text: "",
           actions: ['GENERATE_REPORT'],
         },
       },
@@ -326,7 +405,7 @@ export const generateReport: Action = {
       {
         name: '{{botName}}',
         content: {
-          text: "I'll create a sprint check-in report for you",
+          text: "",
           actions: ['GENERATE_REPORT'],
         },
       },
@@ -334,12 +413,38 @@ export const generateReport: Action = {
     [
       {
         name: '{{name1}}',
-        content: { text: 'How is the team doing with the project?' },
+        content: { text: 'How is the team doing?' },
       },
       {
         name: '{{botName}}',
         content: {
-          text: "I'll generate a project status report to show you how the team is progressing",
+          text: "",
+          actions: ['GENERATE_REPORT'],
+        },
+      },
+    ],
+    [
+      {
+        name: '{{name1}}',
+        content: { text: 'get team updates' },
+      },
+      {
+        name: '{{botName}}',
+        content: {
+          text: "",
+          actions: ['GENERATE_REPORT'],
+        },
+      },
+    ],
+    [
+      {
+        name: '{{name1}}',
+        content: { text: 'show progress report' },
+      },
+      {
+        name: '{{botName}}',
+        content: {
+          text: "",
           actions: ['GENERATE_REPORT'],
         },
       },

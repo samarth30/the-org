@@ -70,6 +70,11 @@ export const updatesFormatAction: Action = {
 
       const entityById = await runtime.getEntityById(message.entityId);
 
+      // Log Discord metadata
+      logger.info('Discord metadata:', {
+        discord: entityById?.metadata?.discord || 'No Discord metadata found'
+      });
+
       const username =
         entityById?.metadata?.discord?.userName || entityById?.metadata?.telegram?.userName;
 
