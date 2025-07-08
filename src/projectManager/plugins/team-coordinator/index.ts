@@ -35,13 +35,8 @@ export const teamCoordinatorPlugin: Plugin = {
     try {
       logger.info('Initializing Team Coordinator plugin...');
 
-      // Register the services
-      logger.info('Registering TeamUpdateTrackerService...');
-      await runtime.registerService(TeamUpdateTrackerService);
-
-      // Register and start the CheckIn service
-      // logger.info('Registering CheckInService...');
-      // await runtime.registerService(CheckInService);
+      // Services are now registered manually in projectManager init
+      // No service registration here to avoid duplicates
 
       // Delay task registration to ensure adapter is ready
       logger.info('Scheduling team coordinator tasks registration...');
@@ -81,30 +76,6 @@ export const teamCoordinatorPlugin: Plugin = {
       throw error;
     }
   },
-  // List services that should be registered by the runtime
-  services: [TeamUpdateTrackerService, CheckInService],
-};
-
-export function initialize(runtime: IAgentRuntime) {
-  // Initialize services
-  new CheckInService(runtime);
-  // new ScheduleService(runtime);
-
-  // Return actions
-  return {
-    actions: [
-      // checkInFormatAction,
-      recordCheckInAction,
-      teamMemberUpdatesAction,
-      listCheckInSchedules,
-      generateReport,
-      addTeamMemberAction,
-      listTeamMembersAction,
-      updatesFormatAction,
-    ],
-  };
-}
-
-export default {
-  initialize,
+  // Services are now registered manually in projectManager init
+  services: [],
 };
