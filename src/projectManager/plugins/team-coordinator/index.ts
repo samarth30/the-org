@@ -44,27 +44,30 @@ export const teamCoordinatorPlugin: Plugin = {
       logger.info('Scheduling team coordinator tasks registration...');
       
       // Use a retry mechanism to register tasks when adapter is ready
-      const registerTasksWithRetry = async (retries = 10, delay = 1000) => {
+      const registerTasksWithRetry = async (retries = 10, delay = 2000) => {
         for (let i = 0; i < retries; i++) {
           try {
-            // Check if getTasks method is available
-            if (runtime.getTasks && typeof runtime.getTasks === 'function') {
-              logger.info('Runtime is ready, registering team coordinator tasks...');
+            // Check if both getTasks and adapter are available
+            if (runtime.getTasks && typeof runtime.getTasks === 'function' && 
+                runtime.adapter && runtime.createTask && typeof runtime.createTask === 'function') {
+              logger.info('Runtime and adapters are ready, registering team coordinator tasks...');
               await registerTasks(runtime);
               logger.info('Team coordinator tasks registered successfully');
               return;
             } else {
-              logger.info(`Runtime not ready yet, retrying in ${delay}ms... (attempt ${i + 1}/${retries})`);
+              logger.info(`Runtime/adapters not ready yet, retrying in ${delay}ms... (attempt ${i + 1}/${retries})`);
+              logger.debug(`Available methods: getTasks=${!!runtime.getTasks}, adapter=${!!runtime.adapter}, createTask=${!!runtime.createTask}`);
             }
           } catch (error) {
             logger.warn(`Failed to register tasks (attempt ${i + 1}/${retries}):`, error);
           }
           
-          // Wait before next retry
+          // Wait before next retry (increasing delay)
           await new Promise(resolve => setTimeout(resolve, delay));
+          delay = Math.min(delay * 1.2, 5000); // Exponential backoff with max 5 seconds
         }
         
-        logger.error('Failed to register team coordinator tasks after all retries');
+        logger.error('Failed to register team coordinator tasks after all retries - continuing without tasks');
       };
 
       // Start the retry process asynchronously

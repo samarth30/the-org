@@ -32,30 +32,31 @@ const character: Character = {
   name: 'Jimmy',
   plugins: [
     '@elizaos/plugin-sql',
-    '@elizaos/plugin-openrouter',
-    // ...(process.env.ANTHROPIC_API_KEY ? ['@elizaos/plugin-anthropic'] : []),
+    // '@elizaos/plugin-openrouter',
+    ...(process.env.ANTHROPIC_API_KEY ? ['@elizaos/plugin-anthropic'] : []),
     ...(process.env.OPENAI_API_KEY ? ['@elizaos/plugin-openai'] : []),
     ...(!process.env.OPENAI_API_KEY ? ['@elizaos/plugin-local-ai'] : []),
     '@elizaos/plugin-discord',
     // '@elizaos/plugin-pdf',
     // '@elizaos/plugin-video-understanding',
     // '@elizaos/plugin-telegram',
-    '@elizaos/plugin-bootstrap',
+    '@elizaos/plugin-bootstrap', // Removed to prevent debug output
   ],
   settings: {
     secrets: {
       DISCORD_APPLICATION_ID: process.env.PROJECT_MANAGER_DISCORD_APPLICATION_ID,
       DISCORD_API_TOKEN: process.env.PROJECT_MANAGER_DISCORD_API_TOKEN,
       OPENROUTER_API_KEY: "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",
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      ANTHROPIC_API_KEY : process.env.ANTHROPIC_API_KEY,
+      OPENAI_API_KEY : process.env.OPENAI_API_KEY
       // TELEGRAM_BOT_TOKEN: process.env.PROJECT_MANAGER_TELEGRAM_BOT_TOKEN,
     },
     OPENROUTER_BASE_URL: "https://openrouter.ai/api/v1",
-    OPENROUTER_SMALL_MODEL: "google/gemini-flash-1.5-8b",
-    OPENROUTER_LARGE_MODEL: "google/gemini-pro-1.5",
+    OPENROUTER_SMALL_MODEL: "google/gemma-2b",
+    OPENROUTER_LARGE_MODEL: "google/gemma-7b",
     OPENROUTER_IMAGE_MODEL: "google/gemini-pro-vision",
-    SMALL_MODEL: "google/gemini-flash-1.5-8b",
-    LARGE_MODEL: "google/gemini-pro-1.5", 
+    SMALL_MODEL: "google/gemma-2b",
+    LARGE_MODEL: "google/gemma-7b",
     IMAGE_MODEL: "google/gemini-pro-vision",
     discord: {
       shouldRespondOnlyToMentions: false,
@@ -285,17 +286,25 @@ export const projectManager: ProjectAgent = {
       }
     }
 
-    // Register team-coordinator services manually
-    logger.info('Registering TeamUpdateTrackerService...');
-    await runtime.registerService(TeamUpdateTrackerService);
+    // Wait longer to ensure runtime and adapters are fully ready
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    logger.info('Registering CheckInService...');
-    await runtime.registerService(CheckInService);
+    try {
+      // Register team-coordinator services manually
+      logger.info('Registering TeamUpdateTrackerService...');
+      await runtime.registerService(TeamUpdateTrackerService);
+      
+      logger.info('Registering CheckInService...');
+      await runtime.registerService(CheckInService);
 
-    // Initialize team-coordinator plugin directly
-    if (teamCoordinatorPlugin.init) {
-      logger.info('Initializing team-coordinator plugin...');
-      await teamCoordinatorPlugin.init({}, runtime);
+      // Initialize team-coordinator plugin directly
+      if (teamCoordinatorPlugin.init) {
+        logger.info('Initializing team-coordinator plugin...');
+        await teamCoordinatorPlugin.init({}, runtime);
+      }
+    } catch (error) {
+      logger.error('Error during service registration:', error);
+      // Continue anyway - services will retry later
     }
   },
 };
