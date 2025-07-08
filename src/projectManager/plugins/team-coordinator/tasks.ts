@@ -21,15 +21,24 @@ export const registerTasks = async (runtime: IAgentRuntime, initialWorldId?: UUI
     teamUpdateService = new TeamUpdateTrackerService(runtime);
   }
 
-  // Clear existing tasks
-  const tasks = await runtime.getTasks({
-    tags: ['queue', 'repeat', 'team_coordinator'],
-  });
+  // Clear existing tasks (with defensive check)
+  try {
+    if (runtime.getTasks && typeof runtime.getTasks === 'function') {
+      const tasks = await runtime.getTasks({
+        tags: ['queue', 'repeat', 'team_coordinator'],
+      });
 
-  for (const task of tasks) {
-    if (task.id) {
-      await runtime.deleteTask(task.id);
+      for (const task of tasks) {
+        if (task.id) {
+          await runtime.deleteTask(task.id);
+        }
+      }
+    } else {
+      logger.warn('getTasks method not available, skipping task cleanup');
     }
+  } catch (error) {
+    logger.warn('Error clearing existing tasks:', error);
+    // Continue anyway
   }
 
   // Register the check-in service task worker
@@ -48,15 +57,25 @@ export const registerTasks = async (runtime: IAgentRuntime, initialWorldId?: UUI
     },
   });
 
-  // Create the periodic task
-  runtime.createTask({
-    name: 'TEAM_CHECK_IN_SERVICE',
-    description: 'Regular team check-in service job',
-    worldId: worldId, // Explicitly pass worldId
-    metadata: {
-      updatedAt: Date.now(),
-      updateInterval: 1000 * 60, // 1 minute
-    },
-    tags: ['queue', 'repeat', 'team_coordinator'],
-  });
+  // Create the periodic task (with defensive check)
+  try {
+    if (runtime.createTask && typeof runtime.createTask === 'function' && runtime.adapter) {
+      runtime.createTask({
+        name: 'TEAM_CHECK_IN_SERVICE',
+        description: 'Regular team check-in service job',
+        worldId: worldId, // Explicitly pass worldId
+        metadata: {
+          updatedAt: Date.now(),
+          updateInterval: 1000 * 60 * 15, // 15 minutes - good balance between responsiveness and efficiency
+        },
+        tags: ['queue', 'repeat', 'team_coordinator'],
+      });
+      logger.info('Successfully created TEAM_CHECK_IN_SERVICE task');
+    } else {
+      logger.warn('Task adapter not ready, skipping task creation');
+    }
+  } catch (error) {
+    logger.error('Error creating periodic task:', error);
+    // Don't fail the entire registration process
+  }
 };

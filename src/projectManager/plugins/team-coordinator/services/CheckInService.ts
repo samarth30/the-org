@@ -407,16 +407,27 @@ export class CheckInService extends Service {
 
   private async loadReportChannelConfigs(): Promise<void> {
     try {
+      // Check if runtime is ready
+      if (!this.runtime || !this.runtime.databaseAdapter) {
+        logger.warn('Runtime or database adapter not ready, skipping report channel config loading');
+        return;
+      }
+
       const roomId = createUniqueUuid(this.runtime, 'report-channel-config');
       
-      // Ensure the room exists before trying to access it
-      await this.runtime.ensureRoomExists({
-        id: roomId as UUID,
-        name: 'Report Channel Configurations',
-        source: 'team-coordinator',
-        type: ChannelType.GROUP,
-        worldId: this.runtime.agentId,
-      });
+      // Try to ensure the room exists, but don't fail if it doesn't work
+      try {
+        await this.runtime.ensureRoomExists({
+          id: roomId as UUID,
+          name: 'Report Channel Configurations',
+          source: 'team-coordinator',
+          type: ChannelType.GROUP,
+          worldId: this.runtime.agentId,
+        });
+      } catch (roomError) {
+        logger.warn('Could not ensure room exists, will retry later:', roomError);
+        return;
+      }
       
       const memories = await this.runtime.getMemories({
         roomId: roomId as UUID,
