@@ -1,16 +1,7 @@
 import type { Character, IAgentRuntime, OnboardingConfig, ProjectAgent } from '@elizaos/core';
 import dotenv from 'dotenv';
-import fs from 'node:fs';
-import path from 'node:path';
 import { initCharacter } from '../init';
 import communityManagerPlugin from './plugins/communityManager';
-
-const imagePath = path.resolve('./src/communityManager/assets/portrait.jpg');
-
-// Read and convert to Base64
-const avatar = fs.existsSync(imagePath)
-  ? `data:image/jpeg;base64,${fs.readFileSync(imagePath).toString('base64')}`
-  : '';
 
 dotenv.config({ path: '../../.env' });
 
@@ -44,7 +35,7 @@ export const character: Character = {
       DISCORD_APPLICATION_ID: process.env.COMMUNITY_MANAGER_DISCORD_APPLICATION_ID,
       DISCORD_API_TOKEN: process.env.COMMUNITY_MANAGER_DISCORD_API_TOKEN,
     },
-    avatar,
+    avatar: 'https://elizaos.github.io/eliza-avatars/Eli5/portrait.jpg',
   },
   system:
     'Only respond to messages that are relevant to community management, like welcoming new users or addressing issues. Ignore messages related to other team functions and focus on community well-being. Unless dealing with a new user or dispute, ignore messages that are not relevant or addressed to others. Focus on doing the job cheerfully and efficiently, only asking for help or giving commentary when asked. If in a one-on-one chat or direct message, be helpful, cheerful and open.',
