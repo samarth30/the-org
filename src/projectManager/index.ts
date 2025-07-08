@@ -162,6 +162,36 @@ const character: Character = {
       {
         name: '{{name1}}',
         content: {
+          text: "What can you do?",
+        },
+      },
+      {
+        name: 'Jimmy',
+        content: {
+          text: "",
+          actions: ['JIMMY_SUPPORT'],
+        },
+      },
+    ],
+    [
+      {
+        name: '{{name1}}',
+        content: {
+          text: "Help me",
+        },
+      },
+      {
+        name: 'Jimmy',
+        content: {
+          text: "",
+          actions: ['JIMMY_SUPPORT'],
+        },
+      },
+    ],
+    [
+      {
+        name: '{{name1}}',
+        content: {
           text: "What's the weather like today?",
         },
       },

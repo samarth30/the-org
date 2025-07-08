@@ -12,6 +12,7 @@ import { teamMemberUpdatesAction } from './actions/teamMemberUpdate';
 import { addTeamMemberAction } from './actions/teamMemberAdd';
 import { listTeamMembersAction } from './actions/teamMembersList';
 import { updatesFormatAction } from './actions/updateFormat';
+import { jimmySupportAction } from './actions/jimmySupport';
 import { registerTasks } from './tasks';
 
 /**
@@ -24,6 +25,7 @@ export const teamCoordinatorPlugin: Plugin = {
   providers: [],
   actions: [
     // checkInFormatAction,
+    jimmySupportAction,
     teamMemberUpdatesAction,
     listCheckInSchedules,
     generateReport,
