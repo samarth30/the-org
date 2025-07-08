@@ -350,39 +350,73 @@ Analyze this text and respond with ONLY the word "true" or "false" (lowercase):
       let checkInConfig: any;
 
       try {
-        const prompt = `Extract the following fields from this check-in configuration text:
-        
-Return ONLY a valid JSON object with these exact keys:
+        const prompt = `CRITICAL: You must respond with ONLY a valid JSON object. No explanations, no code blocks, no markdown - just pure JSON.
+
+Analyze this check-in configuration text and extract the required fields:
+
+Text: "${userText}"
+
+Extract these fields and return ONLY this JSON structure:
+
 {
-  "channelForUpdates": "value",
-  "checkInType": "value",
-  "channelForCheckIns": "value", 
-  "frequency": "value",
-  "time": "value"
+  "channelForUpdates": "extract channel name from 'Channel for Updates' field",
+  "checkInType": "convert to one of: STANDUP, SPRINT, MENTAL_HEALTH, PROJECT_STATUS, RETRO",
+  "channelForCheckIns": "extract channel name from 'Channel for Check-ins' field",
+  "frequency": "extract frequency (daily, weekly, etc)",
+  "time": "extract time and convert to 24-hour format"
 }
 
-Note: 
-- checkInType must be one of: STANDUP, SPRINT, MENTAL_HEALTH, PROJECT_STATUS, RETRO
-- For channels, extract only the name (e.g., from #General (922791729709613101) extract "General")
-- Convert AM/PM time to 24 hour format
-        
-Text to parse: "${userText}"`;
+IMPORTANT:
+- For "daily standup" type, use "STANDUP"
+- Extract ONLY channel names, not IDs
+- Convert PM times (e.g., "5:07 PM" becomes "17:07")
+- For frequency, use lowercase (daily, weekly, etc)
+
+Respond with ONLY the JSON object:`;
 
         const parsedResponse = await runtime.useModel(ModelType.TEXT_LARGE, {
           prompt,
           stopSequences: [],
         });
 
+        logger.info('Raw AI response:', parsedResponse);
+        
         checkInConfig = parseJSONObjectFromText(parsedResponse);
+        
+        // Add null check and fallback parsing
+        if (!checkInConfig || checkInConfig === null) {
+          logger.warn('parseJSONObjectFromText returned null, attempting manual parsing');
+          
+          // Try to extract manually as fallback
+          try {
+            // Remove any markdown code blocks
+            let cleanResponse = parsedResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            checkInConfig = JSON.parse(cleanResponse);
+          } catch (manualError) {
+            logger.error('Manual JSON parsing also failed:', manualError);
+            throw new Error('Could not parse check-in configuration from AI response');
+          }
+        }
+        
+        // Validate that all required fields are present
+        const requiredFields = ['channelForUpdates', 'checkInType', 'channelForCheckIns', 'frequency', 'time'];
+        const missingFields = requiredFields.filter(field => !checkInConfig || !checkInConfig[field]);
+        
+        if (missingFields.length > 0) {
+          logger.error('Missing required fields:', missingFields);
+          throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+        }
+        
         logger.info('Successfully parsed check-in configuration:', checkInConfig);
       } catch (error: unknown) {
         const err = error as Error;
         logger.error('Failed to parse check-in configuration:', err);
-        if (callback) {
-          callback({
-            text: 'Failed to parse check-in configuration. Please provide the information in the correct format.',
-          });
-        }
+        await callback(
+          {
+            text: 'Failed to parse check-in configuration. Please provide the information in the correct format with all required fields:\n• Channel for Updates\n• Check-in Type\n• Channel for Check-ins\n• Frequency\n• Time',
+          },
+          []
+        );
         return false;
       }
 
