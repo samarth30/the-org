@@ -1,4 +1,4 @@
-FROM node:23.3.0-slim AS builder
+FROM node:18-slim AS builder
 
 WORKDIR /app
 
@@ -30,7 +30,7 @@ RUN bun install --no-cache
 
 RUN bun run build
 
-FROM node:23.3.0-slim
+FROM node:18-slim
 
 WORKDIR /app
 
