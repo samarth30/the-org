@@ -1,4 +1,4 @@
-FROM node:18-slim AS builder
+FROM node:16-slim AS builder
 
 WORKDIR /app
 
@@ -26,11 +26,11 @@ COPY package.json tsconfig.json ./
 COPY src ./src
 COPY . .
 
-RUN bun install --no-cache
+RUN npm install --no-optional --no-audit --no-fund
 
 RUN bun run build
 
-FROM node:18-slim
+FROM node:16-slim
 
 WORKDIR /app
 
