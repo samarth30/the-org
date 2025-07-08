@@ -6,6 +6,7 @@ import { logger } from '@elizaos/core';
 import { listCheckInSchedules } from './actions/checkInList';
 import { TeamUpdateTrackerService } from './services/updateTracker';
 import { recordCheckInAction } from './actions/checkInCreate';
+import { checkInInfoAction } from './actions/checkInInfo';
 import { generateReport } from './actions/reportGenerate';
 import { teamMemberUpdatesAction } from './actions/teamMemberUpdate';
 import { addTeamMemberAction } from './actions/teamMemberAdd';
@@ -27,6 +28,7 @@ export const teamCoordinatorPlugin: Plugin = {
     listCheckInSchedules,
     generateReport,
     recordCheckInAction,
+    checkInInfoAction,
     addTeamMemberAction,
     listTeamMembersAction,
     updatesFormatAction,
