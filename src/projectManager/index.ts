@@ -46,7 +46,7 @@ const character: Character = {
     secrets: {
       DISCORD_APPLICATION_ID: process.env.PROJECT_MANAGER_DISCORD_APPLICATION_ID,
       DISCORD_API_TOKEN: process.env.PROJECT_MANAGER_DISCORD_API_TOKEN,
-      OPENROUTER_API_KEY: "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",
+      OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
       ANTHROPIC_API_KEY : process.env.ANTHROPIC_API_KEY,
       OPENAI_API_KEY : process.env.OPENAI_API_KEY
       // TELEGRAM_BOT_TOKEN: process.env.PROJECT_MANAGER_TELEGRAM_BOT_TOKEN,
