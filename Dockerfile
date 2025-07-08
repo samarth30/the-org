@@ -11,19 +11,22 @@ RUN apt-get update && \
     git \
     make \
     python3 \
+    python3-dev \
+    pkg-config \
+    libnode-dev \
     unzip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g bun@1.2.5 turbo@2.3.3
+RUN npm install -g bun@1.2.5 node-gyp@latest
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
-COPY package.json turbo.json tsconfig.json lerna.json renovate.json .npmrc ./
-COPY scripts ./scripts
-COPY packages ./packages
+COPY package.json tsconfig.json ./
+COPY src ./src
+COPY . .
 
-RUN SKIP_POSTINSTALL=1 bun install --no-cache
+RUN bun install --no-cache
 
 RUN bun run build
 
@@ -41,20 +44,16 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g bun@1.2.5 turbo@2.3.3
+RUN npm install -g bun@1.2.5
 
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/turbo.json ./
 COPY --from=builder /app/tsconfig.json ./
-COPY --from=builder /app/lerna.json ./
-COPY --from=builder /app/renovate.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src ./src
 
 ENV NODE_ENV=production
 
 EXPOSE 3000
-EXPOSE 50000-50100/udp
 
 CMD ["bun", "run", "start"]
