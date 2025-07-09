@@ -1,4 +1,4 @@
-FROM node:18-slim
+FROM node:20-slim
 
 WORKDIR /app
 
@@ -17,6 +17,8 @@ RUN npm install -g bun@1.2.5
 # Set environment variables to avoid native module compilation issues
 ENV NODE_ENV=production
 ENV PYTHON=/usr/bin/python3
+ENV PORT=3000
+ENV HOST=0.0.0.0
 
 COPY package.json tsconfig.json ./
 COPY .bunfig.toml ./
@@ -29,5 +31,6 @@ COPY src ./src
 COPY . .
 
 EXPOSE 3000
+EXPOSE 50000-50100/udp
 
 CMD ["bun", "run", "start"]
