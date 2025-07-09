@@ -24,7 +24,6 @@ export const teamCoordinatorPlugin: Plugin = {
   description: 'Team Coordinator plugin for managing team activities',
   providers: [],
   actions: [
-    // checkInFormatAction,
     jimmySupportAction,
     teamMemberUpdatesAction,
     listCheckInSchedules,
