@@ -9,3 +9,10 @@ dist
 README.md
 Dockerfile
 .dockerignore
+.turbo-tsconfig.json
+tsconfig.tsbuildinfo
+logs.txt
+eliza/
+.DS_Store
+.vscode
+.idea

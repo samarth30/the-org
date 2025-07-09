@@ -1,0 +1,15 @@
+[install]
+# Disable native module compilation for Railway compatibility
+cache = false
+registry = "https://registry.npmjs.org/"
+exact = true
+
+[install.scopes]
+# Skip problematic native modules
+"@discordjs" = { optional = true }
+"@coral-xyz" = { optional = true }
+"@solana" = { optional = true }
+
+[install.lockfile]
+# Don't save lockfile to avoid issues
+save = false

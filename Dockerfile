@@ -1,35 +1,3 @@
-FROM node:18-slim AS builder
-
-WORKDIR /app
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    ffmpeg \
-    g++ \
-    git \
-    make \
-    python3 \
-    python3-dev \
-    pkg-config \
-    libnode-dev \
-    unzip && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN npm install -g bun@1.2.5 node-gyp@latest
-
-RUN ln -s /usr/bin/python3 /usr/bin/python
-
-COPY package.json tsconfig.json ./
-COPY src ./src
-COPY . .
-
-RUN bun install
-
-RUN bun run build
-
 FROM node:18-slim
 
 WORKDIR /app
@@ -46,13 +14,19 @@ RUN apt-get update && \
 
 RUN npm install -g bun@1.2.5
 
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/tsconfig.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src ./src
-
+# Set environment variables to avoid native module compilation issues
 ENV NODE_ENV=production
+ENV PYTHON=/usr/bin/python3
+
+COPY package.json tsconfig.json ./
+COPY .bunfig.toml ./
+
+# Install dependencies skipping problematic native modules
+RUN bun install --ignore-scripts --no-verify
+
+# Copy source code
+COPY src ./src
+COPY . .
 
 EXPOSE 3000
 
